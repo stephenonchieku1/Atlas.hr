@@ -57,6 +57,35 @@
           <h1 class="page-title">Dashboard</h1>
           <p class="page-subtitle" id="dashboard-date"></p>
         </div>
+        <button class="btn btn-outline" id="btn-refresh-dashboard"><span>Refresh</span></button>
+      </div>
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card" id="stat-employees">
+          <div class="stat-body"><div class="stat-value" id="stat-active-employees">—</div><div class="stat-label">Active Employees</div></div>
+        </div>
+        <div class="stat-card warning" id="stat-pending">
+          <div class="stat-body"><div class="stat-value" id="stat-pending-leave">—</div><div class="stat-label">Pending Approvals</div></div>
+        </div>
+        <div class="stat-card info" id="stat-out">
+          <div class="stat-body"><div class="stat-value" id="stat-out-today">—</div><div class="stat-label">Out Today</div></div>
+        </div>
+        <div class="stat-card danger" id="stat-escalated">
+          <div class="stat-body"><div class="stat-value" id="stat-escalated-val">—</div><div class="stat-label">Escalated Requests</div></div>
+        </div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-header"><h2 class="card-title">Pending Approvals</h2><button class="btn btn-ghost btn-sm" id="btn-run-escalate">Check Escalations</button></div>
+          <div id="pending-approvals-list" class="list-container"><div class="empty-state"><span class="spinner"></span></div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><h2 class="card-title">Who's Out Today</h2></div>
+          <div id="out-today-list" class="list-container"><div class="empty-state"><span class="spinner"></span></div></div>
+        </div>
+      </div>
+      <div class="card mt-4">
+        <div class="card-header"><h2 class="card-title">Latest Payroll Run</h2></div>
+        <div id="latest-payroll-summary"></div>
       </div>
     </section>
 
@@ -71,9 +100,7 @@
           <label class="toggle-label">
             <input type="checkbox" id="toggle-inactive" /> Show inactive
           </label>
-          <button class="btn btn-primary" id="btn-add-employee">
-            <span>Add Employee</span>
-          </button>
+          <button class="btn btn-primary" id="btn-add-employee"><span>Add Employee</span></button>
         </div>
       </div>
       <div class="card">
@@ -85,10 +112,43 @@
     </section>
 
     <section id="tab-org" class="tab-section" aria-label="Org Chart"></section>
-    <section id="tab-leave" class="tab-section" aria-label="Leave Management"></section>
-    <section id="tab-payroll" class="tab-section" aria-label="Payroll"></section>
+
+    <!-- Leave Tab -->
+    <section id="tab-leave" class="tab-section" aria-label="Leave Management">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Leave Management</h1>
+          <p class="page-subtitle">Submit, approve, and track leave requests</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-primary" id="btn-submit-leave"><span>Request Leave</span></button>
+        </div>
+      </div>
+      <div class="leave-tabs">
+        <button class="leave-tab-btn active" data-leave-filter="all" id="ltab-all">All Requests</button>
+        <button class="leave-tab-btn" data-leave-filter="pending" id="ltab-pending">Pending <span class="badge" id="pending-count-badge"></span></button>
+        <button class="leave-tab-btn" data-leave-filter="approved" id="ltab-approved">Approved</button>
+        <button class="leave-tab-btn" data-leave-filter="rejected" id="ltab-rejected">Rejected</button>
+      </div>
+      <div class="card mt-2">
+        <div id="leave-list" class="list-container"><div class="empty-state"><span class="spinner"></span></div></div>
+      </div>
+    </section>
+
+    <!-- Payroll Tab -->
+    <section id="tab-payroll" class="tab-section" aria-label="Payroll">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Payroll</h1>
+          <p class="page-subtitle">Generate and review monthly payslips</p>
+        </div>
+        <button class="btn btn-primary" id="btn-gen-payroll"><span>Generate Payroll</span></button>
+      </div>
+      <div id="payroll-runs-wrap" class="card"><div class="empty-state"><span class="spinner"></span></div></div>
+    </section>
   </main>
 
+  <!-- Modals -->
   <!-- Add/Edit Employee Modal -->
   <div class="modal-backdrop" id="modal-employee" role="dialog" aria-modal="true" aria-labelledby="modal-employee-title" style="display:none">
     <div class="modal">
@@ -116,6 +176,91 @@
           <button type="submit" class="btn btn-primary" id="submit-employee-btn">Add Employee</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- Leave Request Modal -->
+  <div class="modal-backdrop" id="modal-leave" role="dialog" aria-modal="true" aria-labelledby="modal-leave-title" style="display:none">
+    <div class="modal">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-leave-title">Request Leave</h2>
+        <button class="modal-close" id="close-modal-leave" aria-label="Close">&times;</button>
+      </div>
+      <form id="form-leave" class="modal-body">
+        <div class="form-group"><label for="leave-employee">Employee *</label><select id="leave-employee" name="employee_id" required></select></div>
+        <div id="leave-balance-preview" class="balance-preview" style="display:none"></div>
+        <div class="form-grid">
+          <div class="form-group"><label for="leave-type">Leave Type *</label>
+            <select id="leave-type" name="leave_type" required>
+              <option value="annual">Annual Leave</option><option value="sick">Sick Leave</option><option value="unpaid">Unpaid Leave</option>
+            </select>
+          </div>
+          <div class="form-group"><label for="leave-start">Start Date *</label><input type="date" id="leave-start" name="start_date" required /></div>
+          <div class="form-group"><label for="leave-end">End Date *</label><input type="date" id="leave-end" name="end_date" required /></div>
+          <div class="form-group"><label>Working Days</label><div class="days-preview" id="days-preview">—</div></div>
+        </div>
+        <div class="form-group"><label for="leave-reason">Reason</label><textarea id="leave-reason" name="reason" rows="2" placeholder="Optional reason"></textarea></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="cancel-modal-leave">Cancel</button>
+          <button type="submit" class="btn btn-primary">Submit Request</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Generate Payroll Modal -->
+  <div class="modal-backdrop" id="modal-payroll" role="dialog" aria-modal="true" aria-labelledby="modal-payroll-title" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-payroll-title">Generate Payroll Run</h2>
+        <button class="modal-close" id="close-modal-payroll" aria-label="Close">&times;</button>
+      </div>
+      <form id="form-payroll" class="modal-body">
+        <div class="form-grid">
+          <div class="form-group"><label for="payroll-month">Month *</label>
+            <select id="payroll-month" name="month" required>
+              <option value="1">January</option><option value="2">February</option><option value="3">March</option>
+              <option value="4">April</option><option value="5">May</option><option value="6">June</option>
+              <option value="7">July</option><option value="8">August</option><option value="9">September</option>
+              <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+            </select>
+          </div>
+          <div class="form-group"><label for="payroll-year">Year *</label><input type="number" id="payroll-year" name="year" value="2026" min="2020" max="2030" required /></div>
+        </div>
+        <div class="form-group"><label for="payroll-notes">Notes</label><input type="text" id="payroll-notes" name="notes" placeholder="e.g. July 2026 regular payroll" /></div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="cancel-modal-payroll">Cancel</button>
+          <button type="submit" class="btn btn-primary">Generate</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Payslips Detail Modal -->
+  <div class="modal-backdrop" id="modal-payslips" role="dialog" aria-modal="true" aria-labelledby="modal-payslips-title" style="display:none">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-payslips-title">Payslips</h2>
+        <button class="modal-close" id="close-modal-payslips" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body" id="payslips-detail-body"></div>
+    </div>
+  </div>
+
+  <!-- Approve/Reject Modal -->
+  <div class="modal-backdrop" id="modal-review" role="dialog" aria-modal="true" aria-labelledby="modal-review-title" style="display:none">
+    <div class="modal modal-sm">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-review-title">Review Leave Request</h2>
+        <button class="modal-close" id="close-modal-review" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div id="review-request-summary"></div>
+        <div class="review-actions">
+          <button class="btn btn-success" id="btn-approve-confirm"><span>Approve</span></button>
+          <button class="btn btn-danger" id="btn-reject-confirm"><span>Reject</span></button>
+        </div>
+      </div>
     </div>
   </div>
 
