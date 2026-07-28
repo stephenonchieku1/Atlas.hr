@@ -35,6 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
     employeeSearch: document.getElementById('employee-search'),
     employeesTableWrap: document.getElementById('employees-table-wrap'),
 
+    orgChartWrap: document.getElementById('org-chart'),
+
     btnSubmitLeave: document.getElementById('btn-submit-leave'),
     leaveTabBtns: document.querySelectorAll('.leave-tab-btn'),
     pendingCountBadge: document.getElementById('pending-count-badge'),
@@ -112,7 +114,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openModal(modal) { if (modal) modal.style.display = 'flex'; }
   function closeModal(modal) { if (modal) modal.style.display = 'none'; }
-  function formatCurrency(amount) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(amount); }
   function formatDate(dateStr) { if (!dateStr) return '—'; const d = new Date(dateStr); return isNaN(d) ? dateStr : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
 
   elements.navItems.forEach((btn) => {
@@ -130,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
     switch (tabName) {
       case 'dashboard': loadDashboardData(); break;
       case 'employees': loadEmployeesData(); break;
+      case 'org': loadOrgTreeData(); break;
       case 'leave': loadLeaveData(); break;
       case 'payroll': loadPayrollData(); break;
     }
@@ -170,6 +172,86 @@ document.addEventListener('DOMContentLoaded', () => {
           ${filtered.map(emp => `<tr><td><strong>${emp.name}</strong><br><small style="color:var(--text-muted)">${emp.email}</small></td><td>${emp.role}</td><td>${emp.department}</td><td>${emp.manager_name || '—'}</td><td>${emp.status}</td></tr>`).join('')}
         </tbody>
       </table>
+    `;
+  }
+
+  // Org Chart
+  async function loadOrgTreeData() {
+    try {
+      const data = await apiFetch('/api/employees/org-tree');
+      renderOrgTree(data);
+    } catch (e) { console.error(e); }
+  }
+
+  function renderOrgTree(employees) {
+    if (!employees || employees.length === 0) {
+      elements.orgChartWrap.innerHTML = `<div class="empty-state">No organization data available</div>`;
+      return;
+    }
+
+    const map = {};
+    const roots = [];
+
+    employees.forEach((e) => (map[e.id] = { ...e, children: [] }));
+    employees.forEach((e) => {
+      if (e.manager_id && map[e.manager_id]) {
+        map[e.manager_id].children.push(map[e.id]);
+      } else {
+        roots.push(map[e.id]);
+      }
+    });
+
+    function getInitials(name) {
+      if (!name) return '??';
+      const parts = name.trim().split(/\s+/);
+      if (parts.length === 1) return parts[0].substring(0, 2).toUpperCase();
+      return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+    }
+
+    function buildNodeHtml(node, isRoot = false) {
+      const hasChildren = node.children && node.children.length > 0;
+      const initials = getInitials(node.name);
+
+      return `
+        <div class="org-node-wrapper${isRoot ? ' is-root-wrapper' : ''}">
+          <div class="org-node-card${isRoot ? ' is-root-card' : ''}">
+            ${!isRoot ? `
+              <div class="org-arrow-indicator" title="Reports to Manager">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 5v14M19 12l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            ` : ''}
+            <div class="org-node-header">
+              <div class="org-avatar">${initials}</div>
+              <div class="org-node-meta">
+                <div class="org-node-name">${node.name}</div>
+                <div class="org-node-role">${node.role || ''}</div>
+              </div>
+            </div>
+            ${node.department ? `<div class="org-node-dept">${node.department}</div>` : ''}
+          </div>
+
+          ${hasChildren ? `
+            <div class="org-parent-stem">
+              <div class="org-stem-arrow" title="Direct Reports">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                  <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+            </div>
+            <div class="org-children-wrapper">
+              ${node.children.map((child) => buildNodeHtml(child, false)).join('')}
+            </div>
+          ` : ''}
+        </div>
+      `;
+    }
+
+    elements.orgChartWrap.innerHTML = `
+      <div class="org-tree-root">
+        ${roots.map((root) => buildNodeHtml(root, true)).join('')}
+      </div>
     `;
   }
 
