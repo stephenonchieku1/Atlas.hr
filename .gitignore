@@ -1,1 +1,4 @@
 node_modules/
+database/hr_payroll.db
+*.db-shm
+*.db-wal
