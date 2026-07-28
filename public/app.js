@@ -104,7 +104,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ...options,
       });
       const data = await res.json();
-      if (!res.ok || !data.success) throw new Error(data.error || 'An error occurred');
+      if (!res.ok || !data.success) throw new Error(data.error || 'An error occurred processing request');
       return data.data;
     } catch (err) {
       showToast(err.message, 'danger');
@@ -114,6 +114,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function openModal(modal) { if (modal) modal.style.display = 'flex'; }
   function closeModal(modal) { if (modal) modal.style.display = 'none'; }
+  function formatCurrency(amount) { return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2 }).format(amount); }
   function formatDate(dateStr) { if (!dateStr) return '—'; const d = new Date(dateStr); return isNaN(d) ? dateStr : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
 
   elements.navItems.forEach((btn) => {
@@ -316,4 +317,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (elements.closeModalReview) elements.closeModalReview.addEventListener('click', () => closeModal(elements.modalReview));
   if (elements.toggleInactive) elements.toggleInactive.addEventListener('change', loadEmployeesData);
   if (elements.employeeSearch) elements.employeeSearch.addEventListener('input', renderEmployeesTable);
+
+  switchTab('dashboard');
 });
