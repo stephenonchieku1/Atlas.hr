@@ -1,14 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ATLAS-HR</title>
-    <link rel="stylesheet" href="/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Internal HR & Payroll management tool — manage employees, leave requests, and payroll." />
+  <title>ATLAS-HR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-    <h1>Atlas HR</h1>
-    <p id="status">Loading…</p>
-    <script src="/app.js"></script>
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">HR</div>
+      <div class="logo-text">
+        <span class="logo-name">ATLAS-HR</span>
+        <span class="logo-sub">People &amp; Payroll</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav" role="navigation" aria-label="Main navigation">
+      <button class="nav-item active" id="nav-dashboard" data-tab="dashboard" aria-current="page">
+        <span>Dashboard</span>
+      </button>
+      <button class="nav-item" id="nav-employees" data-tab="employees">
+        <span>Employees</span>
+      </button>
+      <button class="nav-item" id="nav-org" data-tab="org">
+        <span>Org Chart</span>
+      </button>
+      <button class="nav-item" id="nav-leave" data-tab="leave">
+        <span>Leave</span>
+        <span class="nav-badge" id="leave-badge" style="display:none"></span>
+      </button>
+      <button class="nav-item" id="nav-payroll" data-tab="payroll">
+        <span>Payroll</span>
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user">
+        <div class="avatar">AM</div>
+        <div class="user-info">
+          <span class="user-name">Alice Mwangi</span>
+          <span class="user-role">CEO · Admin</span>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main" id="main-content">
+    <section id="tab-dashboard" class="tab-section active" aria-label="Dashboard">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Dashboard</h1>
+          <p class="page-subtitle" id="dashboard-date"></p>
+        </div>
+      </div>
+    </section>
+    <section id="tab-employees" class="tab-section" aria-label="Employees"></section>
+    <section id="tab-org" class="tab-section" aria-label="Org Chart"></section>
+    <section id="tab-leave" class="tab-section" aria-label="Leave Management"></section>
+    <section id="tab-payroll" class="tab-section" aria-label="Payroll"></section>
+  </main>
+
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+  <script src="app.js"></script>
 </body>
 </html>
